@@ -168,19 +168,27 @@ task prepareFolly(dependsOn: [downloadFolly], type: Copy) {
     into("$thirdPartyNdkDir/folly")
 }
 
+task printDiskUsageAfterPrepareFolly(dependsOn: prepareFolly, type: Exec) {
+    commandLine 'df', '-h'
+}
+
 // GLOG
-task downloadGlog(dependsOn: createNativeDepsDirectories, type: Download) {
+task downloadGlog(dependsOn: [createNativeDepsDirectories, printDiskUsageAfterPrepareFolly], type: Download) {
     src("https://github.com/google/glog/archive/v${GLOG_VERSION}.tar.gz")
     onlyIfNewer(true)
     overwrite(false)
     dest(new File(downloadsDir, "glog-${GLOG_VERSION}.tar.gz"))
 }
 
-task prepareGlog(dependsOn: dependenciesPath ? [] : [downloadGlog], type: Copy) {
+task prepareGlog(dependsOn: dependenciesPath ? [printDiskUsageAfterPrepareFolly] : [downloadGlog], type: Copy) {
     from(dependenciesPath ?: tarTree(downloadGlog.dest))
     include("glog-${GLOG_VERSION}/**/*")
     includeEmptyDirs = false
     into("$thirdPartyNdkDir/glog")
+}
+
+task printDiskUsageAfterPrepareGlog(dependsOn: prepareGlog, type: Exec) {
+    commandLine 'df', '-h'
 }
 
 // BOOST
@@ -190,7 +198,7 @@ task prepareGlog(dependsOn: dependenciesPath ? [] : [downloadGlog], type: Copy) 
 // and the build will use that.
 def boostPath = dependenciesPath ?: System.getenv("REACT_NATIVE_BOOST_PATH")
 
-task downloadBoost(dependsOn: createNativeDepsDirectories, type: Download) {
+task downloadBoost(dependsOn: [createNativeDepsDirectories, printDiskUsageAfterPrepareGlog], type: Download) {
     src("https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION.replace("_", ".")}/source/boost_${BOOST_VERSION}.tar.gz")
     onlyIfNewer(true)
     overwrite(false)
@@ -208,8 +216,12 @@ task prepareBoost(dependsOn: [downloadBoost], type: Copy) {
     }
 }
 
+task printDiskUsageAfterPrepareBoost(dependsOn: prepareBoost, type: Exec) {
+    commandLine 'df', '-h'
+}
+
 // DOUBLE-CONVERSION
-task downloadDoubleConversion(dependsOn: createNativeDepsDirectories, type: Download) {
+task downloadDoubleConversion(dependsOn: [createNativeDepsDirectories, printDiskUsageAfterPrepareBoost], type: Download) {
     src("https://github.com/google/double-conversion/archive/v${DOUBLE_CONVERSION_VERSION}.tar.gz")
     onlyIfNewer(true)
     overwrite(false)
@@ -225,11 +237,15 @@ task prepareDoubleConversion(dependsOn: [downloadDoubleConversion], type: Copy) 
     into("$thirdPartyNdkDir/double-conversion")
 }
 
+task printDiskUsageAfterPrepareDoubleConversion(dependsOn: prepareDoubleConversion, type: Exec) {
+    commandLine 'df', '-h'
+}
+
 // OPENSSL
 def hostSystem = System.getProperty('os.name').toLowerCase(Locale.ROOT)
 def hostTag = hostSystem.contains('mac') ? 'darwin-x86_64' : 'linux-x86_64'
 
-task downloadOpenSSL(dependsOn: createNativeDepsDirectories, type: Download) {
+task downloadOpenSSL(dependsOn: [createNativeDepsDirectories, printDiskUsageAfterPrepareDoubleConversion], type: Download) {
     src("https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz")
     onlyIfNewer(true)
     overwrite(false)
@@ -237,7 +253,7 @@ task downloadOpenSSL(dependsOn: createNativeDepsDirectories, type: Download) {
 }
 
 task prepareOpenSSL(
-    dependsOn: dependenciesPath ? [] : [downloadOpenSSL],
+    dependsOn: dependenciesPath ? [printDiskUsageAfterPrepareDoubleConversion] : [downloadOpenSSL],
     type: Copy
 ) {
     from(dependenciesPath ?: tarTree(downloadOpenSSL.dest))
@@ -246,7 +262,7 @@ task prepareOpenSSL(
     into("${thirdPartyNdkDir}/openssl")
 }
 
-task prebuildOpenSSL(dependsOn: dependenciesPath ? [] : [prepareOpenSSL]) {
+task prebuildOpenSSL(dependsOn: dependenciesPath ? [printDiskUsageAfterPrepareDoubleConversion] : [prepareOpenSSL]) {
     inputs.properties([
         'openssl.version': OPENSSL_VERSION,
         'openssl.abis': getBuildTypeABIs(reactNativeArchitectures())
@@ -273,6 +289,10 @@ task prebuildOpenSSL(dependsOn: dependenciesPath ? [] : [prepareOpenSSL]) {
             }
         }
     }
+}
+
+task printDiskUsageAfterPrebuildOpenSSL(dependsOn: prebuildOpenSSL, type: Exec) {
+    commandLine 'df', '-h'
 }
 
 // JNI
@@ -357,11 +377,11 @@ tasks.whenTaskAdded { task ->
 
 // EXTERNAL LIBS
 task prepareExternalLibs {
-    dependsOn prepareFolly
-    dependsOn prepareGlog
-    dependsOn prepareBoost
-    dependsOn prepareDoubleConversion
-    dependsOn prebuildOpenSSL
+    dependsOn printDiskUsageAfterPrepareFolly
+    dependsOn printDiskUsageAfterPrepareGlog
+    dependsOn printDiskUsageAfterPrepareBoost
+    dependsOn printDiskUsageAfterPrepareDoubleConversion
+    dependsOn printDiskUsageAfterPrebuildOpenSSL
 }
 
 // Removes the '.cxx' directory to prevent running
@@ -398,10 +418,27 @@ task copyNativeRustLibraryFiles(dependsOn: buildNativeRustLibrary, type: Copy) {
   into nativeRustLibraryDir
 }
 
+task printDiskUsageAfterPrepareExternalLibs(type: Exec) {
+    commandLine 'df', '-h'
+}
+
+task printDiskUsageAfterUpdateRustToolchain(type: Exec) {
+    commandLine 'df', '-h'
+}
+
+task printDiskUsageAfterCopyNativeRustLibraryFiles(type: Exec) {
+    commandLine 'df', '-h'
+}
+
 // Bind preBuild dependencies only if not 'clean' running
 if (!isCleanRunning()) {
     afterEvaluate {
-        preBuild.dependsOn(prepareExternalLibs, updateRustToolchain, copyNativeRustLibraryFiles)
+        printDiskUsageAfterPrepareExternalLibs.dependsOn(prepareExternalLibs)
+        updateRustToolchain.dependsOn(printDiskUsageAfterPrepareExternalLibs)
+        printDiskUsageAfterUpdateRustToolchain.dependsOn(updateRustToolchain)
+        copyNativeRustLibraryFiles.dependsOn(printDiskUsageAfterUpdateRustToolchain)
+        printDiskUsageAfterCopyNativeRustLibraryFiles.dependsOn(copyNativeRustLibraryFiles)
+        preBuild.dependsOn(printDiskUsageAfterPrepareExternalLibs, printDiskUsageAfterUpdateRustToolchain, printDiskUsageAfterCopyNativeRustLibraryFiles)
     }
 }
 
