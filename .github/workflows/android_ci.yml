@@ -84,6 +84,11 @@ jobs:
       - name: Disk Usage
         run: df -h
 
+      - name: Move Android SDK folder
+        run: |
+          mv "$ANDROID_SDK_ROOT" "$GITHUB_WORKSPACE/.android_sdk"
+          export ANDROID_SDK_ROOT="$GITHUB_WORKSPACE/.android_sdk"
+
       - name: Build with Gradle
         working-directory: ./native/android
         env:
