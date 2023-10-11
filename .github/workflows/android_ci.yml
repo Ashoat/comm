@@ -91,6 +91,9 @@ jobs:
           ln -s "$GITHUB_WORKSPACE/.ndk" "$ANDROID_SDK_ROOT/ndk"
           ln -s "$ANDROID_SDK_ROOT/ndk-old/"* "$GITHUB_WORKSPACE/.ndk"
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
       - name: Build with Gradle
         working-directory: ./native/android
         env:
