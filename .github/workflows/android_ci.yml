@@ -15,6 +15,9 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+
       - uses: actions/checkout@v3
 
       - name: Delete some stuff to free up disk space
