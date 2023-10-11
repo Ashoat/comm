@@ -17,50 +17,29 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Disk Usage
-        run: df -h
-
       - name: Delete some stuff to free up disk space
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
           sudo rm -rf /usr/local/share/boost
 
-      - name: Disk Usage
-        run: df -h
-
       - name: rustup target add aarch64-linux-android arm-linux-androideabi x86_64-linux-android
         run: rustup target add aarch64-linux-android arm-linux-androideabi x86_64-linux-android
-
-      - name: Disk Usage
-        run: df -h
 
       - name: Install Protobuf compiler
         working-directory: ./scripts
         run: sudo ./install_protobuf.sh
 
-      - name: Disk Usage
-        run: df -h
-
       - name: yarn ci-cleaninstall
         run: yarn ci-cleaninstall
-
-      - name: Disk Usage
-        run: df -h
 
       - name: Save ANDROID_KEY_STORE_B64 to file
         env:
           ANDROID_KEY_STORE_B64: ${{secrets.ANDROID_KEY_STORE_B64}}
         run: echo "$ANDROID_KEY_STORE_B64" > ANDROID_KEY_STORE_B64.b64
 
-      - name: Disk Usage
-        run: df -h
-
       - name: Save ANDROID_KEY_STORE to file
         run: base64 -d ANDROID_KEY_STORE_B64.b64 > android_key_store.keystore
-
-      - name: Disk Usage
-        run: df -h
 
       - name: Configure gradle.properties
         run: |
@@ -68,9 +47,6 @@ jobs:
           touch ~/.gradle/gradle.properties
           echo "COMM_UPLOAD_STORE_FILE=$(pwd)/android_key_store.keystore" >> ~/.gradle/gradle.properties
           echo "COMM_UPLOAD_KEY_ALIAS=AndroidSigningKey" >> ~/.gradle/gradle.properties
-
-      - name: Disk Usage
-        run: df -h
 
       - name: Build with Gradle
         working-directory: ./native/android
