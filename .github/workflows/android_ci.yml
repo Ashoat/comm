@@ -76,10 +76,10 @@ jobs:
 
       - name: Configure gradle.properties
         run: |
-          mkdir ~/.gradle
-          touch ~/.gradle/gradle.properties
-          echo "COMM_UPLOAD_STORE_FILE=$(pwd)/android_key_store.keystore" >> ~/.gradle/gradle.properties
-          echo "COMM_UPLOAD_KEY_ALIAS=AndroidSigningKey" >> ~/.gradle/gradle.properties
+          mkdir "$GITHUB_WORKSPACE/.gradle"
+          touch "$GITHUB_WORKSPACE/.gradle/gradle.properties"
+          echo "COMM_UPLOAD_STORE_FILE=$(pwd)/android_key_store.keystore" >> "$GITHUB_WORKSPACE/.gradle/gradle.properties"
+          echo "COMM_UPLOAD_KEY_ALIAS=AndroidSigningKey" >> "$GITHUB_WORKSPACE/.gradle/gradle.properties"
 
       - name: Disk Usage
         run: df -h
@@ -88,7 +88,7 @@ jobs:
         working-directory: ./native/android
         env:
           ANDROID_SIGNING_PASSWORD: ${{secrets.ANDROID_SIGNING_PASSWORD}}
-        run: ./gradlew bundleRelease "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=6g"
+        run: ./gradlew bundleRelease "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=6g" -g "$GITHUB_WORKSPACE/.gradle"
 
       - name: Disk Usage
         run: df -h
