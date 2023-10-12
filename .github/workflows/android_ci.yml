@@ -84,6 +84,10 @@ jobs:
       - name: Disk Usage
         run: df -h
 
+      - name: Clear unused NDKs
+        run: |
+          ls -1 "$ANDROID_SDK_ROOT/ndk" | awk '{ if (system("git grep " $0 " > /dev/null")) { system("rm -rf '"$ANDROID_SDK_ROOT/ndk/"'" $0); } }'
+
       - name: Make sure NDK installation happens in GitHub workspace dir
         run: |
           mv "$ANDROID_SDK_ROOT/ndk" "$ANDROID_SDK_ROOT/ndk-old"
