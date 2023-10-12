@@ -86,7 +86,12 @@ jobs:
 
       - name: Clear unused NDKs
         run: |
-          ls -1 "$ANDROID_SDK_ROOT/ndk" | awk '{ if (system("git grep " $0 " > /dev/null")) { system("rm -rf '"$ANDROID_SDK_ROOT/ndk/"'" $0); } }'
+          ls -1 "$ANDROID_SDK_ROOT/ndk" |
+            awk '{
+              if (system("git grep " $0 " > /dev/null")) {
+                system("rm -rf '"$ANDROID_SDK_ROOT/ndk/"'" $0);
+              }
+            }'
 
       - name: Make sure NDK installation happens in GitHub workspace dir
         run: |
