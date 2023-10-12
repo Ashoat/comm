@@ -15,19 +15,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Disk Usage
-        run: df -h
-
-      - name: Maximize build space
-        uses: easimon/maximize-build-space@master
-
-      - name: Disk Usage
-        run: df -h
-
       - uses: actions/checkout@v3
-
-      - name: Disk Usage
-        run: df -h
 
       - name: Delete some stuff to free up disk space
         run: |
@@ -35,54 +23,30 @@ jobs:
           sudo rm -rf /opt/ghc
           sudo rm -rf /usr/local/share/boost
 
-      - name: Disk Usage
-        run: df -h
-
       - name: rustup target add aarch64-linux-android arm-linux-androideabi x86_64-linux-android
         run: rustup target add aarch64-linux-android arm-linux-androideabi x86_64-linux-android
-
-      - name: Disk Usage
-        run: df -h
 
       - name: Install Protobuf compiler
         working-directory: ./scripts
         run: sudo ./install_protobuf.sh
 
-      - name: Disk Usage
-        run: df -h
-
-      - name: Move yarn cache folder
-        run: yarn config set cache-folder "$GITHUB_WORKSPACE/.yarn-cache"
-
       - name: yarn ci-cleaninstall
         run: yarn ci-cleaninstall
-
-      - name: Disk Usage
-        run: df -h
 
       - name: Save ANDROID_KEY_STORE_B64 to file
         env:
           ANDROID_KEY_STORE_B64: ${{secrets.ANDROID_KEY_STORE_B64}}
         run: echo "$ANDROID_KEY_STORE_B64" > ANDROID_KEY_STORE_B64.b64
 
-      - name: Disk Usage
-        run: df -h
-
       - name: Save ANDROID_KEY_STORE to file
         run: base64 -d ANDROID_KEY_STORE_B64.b64 > android_key_store.keystore
 
-      - name: Disk Usage
-        run: df -h
-
       - name: Configure gradle.properties
         run: |
-          mkdir "$GITHUB_WORKSPACE/.gradle"
-          touch "$GITHUB_WORKSPACE/.gradle/gradle.properties"
-          echo "COMM_UPLOAD_STORE_FILE=$(pwd)/android_key_store.keystore" >> "$GITHUB_WORKSPACE/.gradle/gradle.properties"
-          echo "COMM_UPLOAD_KEY_ALIAS=AndroidSigningKey" >> "$GITHUB_WORKSPACE/.gradle/gradle.properties"
-
-      - name: Disk Usage
-        run: df -h
+          mkdir ~/.gradle
+          touch ~/.gradle/gradle.properties
+          echo "COMM_UPLOAD_STORE_FILE=$(pwd)/android_key_store.keystore" >> ~/.gradle/gradle.properties
+          echo "COMM_UPLOAD_KEY_ALIAS=AndroidSigningKey" >> ~/.gradle/gradle.properties
 
       - name: Clear unused NDKs
         run: |
@@ -100,14 +64,11 @@ jobs:
           ln -s "$GITHUB_WORKSPACE/.ndk" "$ANDROID_SDK_ROOT/ndk"
           ln -s "$ANDROID_SDK_ROOT/ndk-old/"* "$GITHUB_WORKSPACE/.ndk"
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-
       - name: Build with Gradle
         working-directory: ./native/android
         env:
           ANDROID_SIGNING_PASSWORD: ${{secrets.ANDROID_SIGNING_PASSWORD}}
-        run: ./gradlew bundleRelease "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=6g" -g "$GITHUB_WORKSPACE/.gradle"
+        run: ./gradlew bundleRelease "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=6g"
 
       - name: Disk Usage
         run: df -h
