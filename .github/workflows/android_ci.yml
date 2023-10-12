@@ -57,13 +57,6 @@ jobs:
               }
             }'
 
-      - name: Make sure NDK installation happens in GitHub workspace dir
-        run: |
-          mv "$ANDROID_SDK_ROOT/ndk" "$ANDROID_SDK_ROOT/ndk-old"
-          mkdir "$GITHUB_WORKSPACE/.ndk"
-          ln -s "$GITHUB_WORKSPACE/.ndk" "$ANDROID_SDK_ROOT/ndk"
-          ln -s "$ANDROID_SDK_ROOT/ndk-old/"* "$GITHUB_WORKSPACE/.ndk"
-
       - name: Build with Gradle
         working-directory: ./native/android
         env:
